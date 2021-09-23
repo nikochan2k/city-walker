@@ -22,27 +22,30 @@ public class Cli implements Callable<Integer> {
 
 	private static final Logger LOGGER = Logger.getLogger(Cli.class.getName());
 
+	private final FileSystem fs;
 	final String sep;
-	final FileSystem fs;
-	Set<Factory> factories;
+	private Set<Factory> factories;
+	
+	@Option(names = { "-f", "--flipXY" }, description = "flip X and Y coordinate")
+	boolean flipXY;
 
-	@Option(names = { "-t", "--type" }, description = "Output format type", required = true)
-	String type;
+	@Parameters(paramLabel = "FILE", description = "Glob pattern of file path.")
+	private String[] globs;
 
 	@Option(names = { "-s", "--src" }, description = "Source SRS (Default: Try to detect, or EPSG:4326")
 	String inputSRS;
 
-	@Option(names = { "-d", "--dst" }, description = "Destination SRS (Default: EPSG:4326)")
-	String outputSRS;
+	@Option(names = { "-n", "--no-attr" }, description = "No attribute except for measuredHeight")
+	boolean noAttributes;
 
 	@Option(names = { "-o", "--output" }, description = "Output directory (Default: the same directory with input file")
 	File outputDir;
 
-	@Option(names = { "-n", "--no-attr" }, description = "No attribute except for measuredHeight")
-	boolean noAttributes;
+	@Option(names = { "-d", "--dst" }, description = "Destination SRS (Default: EPSG:4326)")
+	String outputSRS;
 
-	@Parameters(paramLabel = "FILE", description = "Glob pattern of file path.")
-	private String[] globs;
+	@Option(names = { "-t", "--type" }, description = "Output format type", required = true)
+	String type;
 
 	public Cli() {
 		fs = FileSystems.getDefault();
@@ -120,6 +123,7 @@ public class Cli implements Callable<Integer> {
 				factory.setNoAttributes(noAttributes);
 				factory.setInputSRS(inputSRS);
 				factory.setOutputSRS(outputSRS);
+				factory.setFlipXY(flipXY);
 				factories.add(factory);
 			} catch (InstantiationException | IllegalAccessException | SecurityException | IllegalArgumentException e) {
 				LOGGER.warning(e.toString());

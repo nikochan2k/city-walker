@@ -68,7 +68,7 @@ class CliTest {
 		File file = new File(path);
 		File json = new File(file.getParent(), "53392633_bldg_6697_op2.json");
 		json.delete();
-		int result = cmd.execute("-t=geojson", "-n", path);
+		int result = cmd.execute("-t=geojson", "-f", "-n", path);
 		assertEquals(result, 0);
 		assertEquals(true, json.exists());
 	}

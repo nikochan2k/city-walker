@@ -60,7 +60,6 @@ public class Parser {
 	private final CRSFactory crsFactory = new CRSFactory();
 	private final CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
 	private final Factory factory;
-	private boolean flipXY;
 	private CoordinateReferenceSystem inputCRS;
 	private CoordinateReferenceSystem outputCRS;
 
@@ -124,7 +123,7 @@ public class Parser {
 			try {
 				double x = dl.get(i);
 				double y = dl.get(i + 1);
-				if (flipXY) {
+				if (factory.isFlipXY()) {
 					double tmp = x;
 					x = y;
 					y = tmp;
@@ -263,10 +262,6 @@ public class Parser {
 		return getPolygon(solid.getExterior().getGeometry());
 	}
 
-	public boolean isFlipXY() {
-		return flipXY;
-	}
-
 	public void parse(File input) throws CityWalkerException {
 		try {
 			CityGMLContext ctx = CityGMLContext.getInstance();
@@ -342,9 +337,5 @@ public class Parser {
 				LOGGER.warning(e.toString());
 			}
 		}
-	}
-
-	public void setFlipXY(boolean flip) {
-		this.flipXY = flip;
 	}
 }

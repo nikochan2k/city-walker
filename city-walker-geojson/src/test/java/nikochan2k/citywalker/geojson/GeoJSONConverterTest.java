@@ -15,8 +15,8 @@ class GeoJSONConverterTest {
 		String path = url.getFile();
 		File file = new File(path);
 		GeoJSONFactory factory = new GeoJSONFactory();
+		factory.setFlipXY(flip);
 		Parser parser = new Parser(factory);
-		parser.setFlipXY(flip);
 		parser.parse(file);
 	}
 

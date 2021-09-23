@@ -4,9 +4,10 @@ import java.io.File;
 
 public abstract class Factory {
 
-	private File outputDir;
-	private boolean noAttributes;
+	private boolean flipXY;
 	private String inputSRS;
+	private boolean noAttributes;
+	private File outputDir;
 	private String outputSRS;
 	
 	public abstract Processor createProcessor(File input, String srs);
@@ -25,8 +26,16 @@ public abstract class Factory {
 
 	public abstract String getTypeName();
 
+	public boolean isFlipXY() {
+		return flipXY;
+	}
+
 	public boolean isNoAttributes() {
 		return noAttributes;
+	}
+
+	public void setFlipXY(boolean flipXY) {
+		this.flipXY = flipXY;
 	}
 
 	public void setInputSRS(String inputSRS) {

@@ -6,4 +6,8 @@ public interface Factory {
 
 	Processor createProcessor(File input, String srs);
 	
+	String getTypeName();
+	
+	void setOutputDir(File outDir);
+	
 }

@@ -1,9 +1,9 @@
 package nikochan2k.citywalker;
 
-public interface Processor {
+public abstract class Processor {
 
-	void process(Item item);
+	protected abstract void process(Item item);
 	
-	void finish();
+	protected abstract void finish();
 
 }

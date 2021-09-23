@@ -71,11 +71,21 @@ public class Parser {
 	public Parser(Factory factory, String inputSRS, String outputSRS) {
 		this.factory = factory;
 		if (inputSRS != null) {
-			inputCRS = crsFactory.createFromName(inputSRS);
+			try {
+				inputCRS = crsFactory.createFromName(inputSRS);
+			} catch (RuntimeException e) {
+				LOGGER.warning(e.toString());
+			}
 		}
 		if (outputSRS != null) {
-			outputCRS = crsFactory.createFromName(outputSRS);
-		} else {
+			try {
+				outputCRS = crsFactory.createFromName(outputSRS);
+			} catch (RuntimeException e) {
+				LOGGER.warning(e.toString());
+			}
+		}
+
+		if (outputCRS == null) {
 			outputCRS = crsFactory.createFromName("EPSG:4326");
 		}
 	}

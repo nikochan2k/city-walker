@@ -2,7 +2,7 @@ package nikochan2k.citywalker;
 
 import java.io.File;
 
-public abstract class Converter implements Processor {
+public abstract class Converter extends Processor {
 
 	protected final File output;
 

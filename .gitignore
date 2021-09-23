@@ -25,5 +25,5 @@ hs_err_pid*
 /target
 /.gradle
 .DS_Store
-*.gml
-*.xml
+/src/test/java/nikochan2k/citywalker/geojson/*.gml
+/src/test/java/nikochan2k/citywalker/geojson/*.xml

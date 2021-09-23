@@ -5,14 +5,7 @@ import java.io.File;
 import nikochan2k.citywalker.Factory;
 import nikochan2k.citywalker.Processor;
 
-public class GeoJSONFactory implements Factory {
-
-	private File outDir;
-	
-	@Override
-	public Processor createProcessor(File input, String srs) {
-		return new GeoJSONConverter(input, outDir, srs);
-	}
+public class GeoJSONFactory extends Factory {
 
 	@Override
 	public String getTypeName() {
@@ -20,8 +13,8 @@ public class GeoJSONFactory implements Factory {
 	}
 
 	@Override
-	public void setOutputDir(File outDir) {
-		this.outDir = outDir;
+	public Processor createProcessor(File input, String srs) {
+		return new GeoJSONConverter(input, this.getOutputDir(), srs);
 	}
 
 }

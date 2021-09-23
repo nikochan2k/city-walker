@@ -60,7 +60,21 @@ class CliTest {
 	}
 
 	@Test
-	void test4() throws IOException {
+	void test4() {
+		Cli cli = new Cli();
+		CommandLine cmd = new CommandLine(cli);
+		URL url = CliTest.class.getResource("53392633_bldg_6697_op2.gml");
+		String path = url.getFile();
+		File file = new File(path);
+		File json = new File(file.getParent(), "53392633_bldg_6697_op2.json");
+		json.delete();
+		int result = cmd.execute("-t=geojson", "-n", path);
+		assertEquals(result, 0);
+		assertEquals(true, json.exists());
+	}
+
+	@Test
+	void test5() throws IOException {
 		Cli cli = new Cli();
 		CommandLine cmd = new CommandLine(cli);
 		URL url = CliTest.class.getResource("53392633_bldg_6697_op2.gml");

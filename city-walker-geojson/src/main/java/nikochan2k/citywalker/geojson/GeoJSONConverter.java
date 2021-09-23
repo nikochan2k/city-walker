@@ -39,8 +39,8 @@ public class GeoJSONConverter extends Converter {
 	private final List<Feature> features = new ArrayList<Feature>();
 	private final Gson gson;
 
-	protected GeoJSONConverter(File input, File outDir, String srs) {
-		super(input, outDir);
+	protected GeoJSONConverter(File input, File outputDir, String srs) {
+		super(input, outputDir);
 		gson = new GsonBuilder().registerTypeAdapterFactory(new GeometryAdapterFactory()).create();
 	}
 

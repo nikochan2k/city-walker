@@ -2,12 +2,48 @@ package nikochan2k.citywalker;
 
 import java.io.File;
 
-public interface Factory {
+public abstract class Factory {
 
-	Processor createProcessor(File input, String srs);
+	private File outputDir;
+	private boolean noAttributes;
+	private String inputSRS;
+	private String outputSRS;
 	
-	String getTypeName();
+	public abstract Processor createProcessor(File input, String srs);
 	
-	void setOutputDir(File outDir);
+	public String getInputSRS() {
+		return inputSRS;
+	}
+
+	public File getOutputDir() {
+		return outputDir;
+	}
+
+	public String getOutputSRS() {
+		return outputSRS;
+	}
+
+	public abstract String getTypeName();
+
+	public boolean isNoAttributes() {
+		return noAttributes;
+	}
+
+	public void setInputSRS(String inputSRS) {
+		this.inputSRS = inputSRS;
+	}
+
+	public void setNoAttributes(boolean noAttributes) {
+		this.noAttributes = noAttributes;
+	}
+
+	public void setOutputDir(File outputDir) {
+		this.outputDir = outputDir;
+	}
+
+	public void setOutputSRS(String outputSRS) {
+		this.outputSRS = outputSRS;
+	}
+	
 	
 }

@@ -35,8 +35,11 @@ public class Cli implements Callable<Integer> {
 	@Option(names = { "-d", "--dst" }, description = "Destination SRS (Default: EPSG:4326)")
 	String outputSRS;
 
-	@Option(names = { "-o", "--output" }, description = "Output directory")
-	File outDir;
+	@Option(names = { "-o", "--output" }, description = "Output directory (Default: the same directory with input file")
+	File outputDir;
+
+	@Option(names = { "-n", "--no-attr" }, description = "No attribute except for measuredHeight")
+	boolean noAttributes;
 
 	@Parameters(paramLabel = "FILE", description = "Glob pattern of file path.")
 	private String[] globs;
@@ -60,8 +63,7 @@ public class Cli implements Callable<Integer> {
 			return 1;
 		}
 
-		Parser parser = new Parser(factory, inputSRS != null ? inputSRS.trim() : null,
-				outputSRS != null ? outputSRS.trim() : null);
+		Parser parser = new Parser(factory);
 		Paths paths = new Paths();
 		for (String glob : globs) {
 			if (glob.contains("*")) {
@@ -114,7 +116,10 @@ public class Cli implements Callable<Integer> {
 		for (Class<? extends Factory> fc : factoryClasses) {
 			try {
 				Factory factory = fc.newInstance();
-				factory.setOutputDir(this.outDir);
+				factory.setOutputDir(outputDir);
+				factory.setNoAttributes(noAttributes);
+				factory.setInputSRS(inputSRS);
+				factory.setOutputSRS(outputSRS);
 				factories.add(factory);
 			} catch (InstantiationException | IllegalAccessException | SecurityException | IllegalArgumentException e) {
 				LOGGER.warning(e.toString());

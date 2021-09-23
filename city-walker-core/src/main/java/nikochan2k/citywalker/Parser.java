@@ -65,21 +65,17 @@ public class Parser {
 	private CoordinateReferenceSystem outputCRS;
 
 	public Parser(Factory factory) {
-		this(factory, null, null);
-	}
-
-	public Parser(Factory factory, String inputSRS, String outputSRS) {
 		this.factory = factory;
-		if (inputSRS != null) {
+		if (factory.getInputSRS() != null) {
 			try {
-				inputCRS = crsFactory.createFromName(inputSRS);
+				inputCRS = crsFactory.createFromName(factory.getInputSRS());
 			} catch (RuntimeException e) {
 				LOGGER.warning(e.toString());
 			}
 		}
-		if (outputSRS != null) {
+		if (factory.getOutputSRS() != null) {
 			try {
-				outputCRS = crsFactory.createFromName(outputSRS);
+				outputCRS = crsFactory.createFromName(factory.getOutputSRS());
 			} catch (RuntimeException e) {
 				LOGGER.warning(e.toString());
 			}
@@ -154,30 +150,34 @@ public class Parser {
 		} else {
 			props.put("measuredHeight", roof);
 		}
-		List<AbstractGenericAttribute> attributes = b.getGenericAttribute();
-		for (AbstractGenericAttribute attr : attributes) {
-			if (attr instanceof StringAttribute) {
-				StringAttribute sa = (StringAttribute) attr;
-				props.put(sa.getName(), sa.getValue());
-			} else if (attr instanceof UriAttribute) {
-				UriAttribute ua = (UriAttribute) attr;
-				props.put(ua.getName(), ua.getValue());
-			} else if (attr instanceof MeasureAttribute) {
-				MeasureAttribute ma = (MeasureAttribute) attr;
-				props.put(ma.getName(), ma.getValue().getValue());
-			} else if (attr instanceof IntAttribute) {
-				IntAttribute ia = (IntAttribute) attr;
-				props.put(ia.getName(), ia.getValue());
-			} else if (attr instanceof DoubleAttribute) {
-				DoubleAttribute da = (DoubleAttribute) attr;
-				props.put(da.getName(), da.getValue());
-			} else if (attr instanceof DateAttribute) {
-				DateAttribute st = (DateAttribute) attr;
-				LocalDate date = st.getValue();
-				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
-				props.put(st.getName(), date.atStartOfDay().atOffset(ZoneOffset.UTC).format(dtf));
+
+		if (!factory.isNoAttributes()) {
+			List<AbstractGenericAttribute> attributes = b.getGenericAttribute();
+			for (AbstractGenericAttribute attr : attributes) {
+				if (attr instanceof StringAttribute) {
+					StringAttribute sa = (StringAttribute) attr;
+					props.put(sa.getName(), sa.getValue());
+				} else if (attr instanceof UriAttribute) {
+					UriAttribute ua = (UriAttribute) attr;
+					props.put(ua.getName(), ua.getValue());
+				} else if (attr instanceof MeasureAttribute) {
+					MeasureAttribute ma = (MeasureAttribute) attr;
+					props.put(ma.getName(), ma.getValue().getValue());
+				} else if (attr instanceof IntAttribute) {
+					IntAttribute ia = (IntAttribute) attr;
+					props.put(ia.getName(), ia.getValue());
+				} else if (attr instanceof DoubleAttribute) {
+					DoubleAttribute da = (DoubleAttribute) attr;
+					props.put(da.getName(), da.getValue());
+				} else if (attr instanceof DateAttribute) {
+					DateAttribute st = (DateAttribute) attr;
+					LocalDate date = st.getValue();
+					DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+					props.put(st.getName(), date.atStartOfDay().atOffset(ZoneOffset.UTC).format(dtf));
+				}
 			}
 		}
+
 		return item;
 	}
 

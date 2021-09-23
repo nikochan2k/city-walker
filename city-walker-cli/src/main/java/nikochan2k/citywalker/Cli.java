@@ -26,7 +26,7 @@ public class Cli implements Callable<Integer> {
 	private final FileSystem fs;
 	final String sep;
 	private Set<Factory> factories;
-	
+
 	@Option(names = { "-f", "--flipXY" }, description = "flip X and Y coordinate")
 	boolean flipXY;
 
@@ -114,7 +114,7 @@ public class Cli implements Callable<Integer> {
 			return factories;
 		}
 
-		Reflections reflections = new Reflections();
+		Reflections reflections = new Reflections(Thread.currentThread().getContextClassLoader());
 		Set<Class<? extends Factory>> factoryClasses = reflections.getSubTypesOf(Factory.class);
 		factories = new HashSet<Factory>(factoryClasses.size());
 		for (Class<? extends Factory> fc : factoryClasses) {
@@ -132,9 +132,9 @@ public class Cli implements Callable<Integer> {
 		}
 		return factories;
 	}
-	
-    public static void main(String... args) {
-        int exitCode = new CommandLine(new Cli()).execute(args);
-        System.exit(exitCode);
-    }
+
+	public static void main(String... args) {
+		int exitCode = new CommandLine(new Cli()).execute(args);
+		System.exit(exitCode);
+	}
 }

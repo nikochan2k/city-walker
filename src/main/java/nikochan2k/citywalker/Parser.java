@@ -59,13 +59,12 @@ public class Parser {
 	private static final Logger LOGGER = Logger.getLogger(Parser.class.getName());
 	private static final Pattern SRS_LIKE = Pattern.compile("\\d{4,}");
 
-	private boolean flipXY;
-
 	private final CRSFactory crsFactory = new CRSFactory();
+	private final CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
 	private final Factory factory;
+	private boolean flipXY;
 	private CoordinateReferenceSystem inputCRS;
 	private CoordinateReferenceSystem outputCRS;
-	private final CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
 
 	public Parser(Factory factory) {
 		this(factory, null, null);
@@ -174,6 +173,41 @@ public class Parser {
 		return item;
 	}
 
+	private double getArea(Polygon polygon) {
+		Exterior ex = (Exterior) polygon.getExterior();
+		LinearRing lr = (LinearRing) ex.getRing();
+		DirectPositionList dpl = (DirectPositionList) lr.getPosList();
+		List<Double> coords;
+		if (dpl != null) {
+			coords = dpl.toList3d();
+		} else {
+			coords = new ArrayList<>();
+			List<PosOrPointPropertyOrPointRep> list = lr.getPosOrPointPropertyOrPointRep();
+			if (list == null) {
+				return 0.0;
+			}
+			for (PosOrPointPropertyOrPointRep item : list) {
+				DirectPosition dp = item.getPos();
+				if (dp == null) {
+					continue;
+				}
+				coords.addAll(dp.getValue());
+			}
+		}
+		double minX = Double.MAX_VALUE, maxX = 0, minY = Double.MAX_VALUE, maxY = 0;
+		for (int i = 0, end = coords.size(); i < end; i += 3) {
+			double x = coords.get(i);
+			double y = coords.get(i + 1);
+			minX = Math.min(minX, x);
+			maxX = Math.max(maxX, x);
+			minY = Math.min(minY, y);
+			maxY = Math.max(maxY, y);
+		}
+		double diffX = maxX - minX;
+		double diffY = maxY - minY;
+		return diffX * diffY;
+	}
+
 	private Polygon getPolygon(AbstractSurface surface) {
 		if (surface instanceof Polygon) {
 			return (Polygon) surface;
@@ -184,7 +218,19 @@ public class Parser {
 			if (spl.size() == 0) {
 				return null;
 			}
-			return getPolygon(spl.get(0).getGeometry());
+			double maxArea = 0.0;
+			Polygon result = null;
+			for (SurfaceProperty sp : spl) {
+				Polygon polygon = getPolygon(sp.getGeometry());
+				if (polygon == null) {
+					continue;
+				}
+				double area = getArea(polygon);
+				if (maxArea < area) {
+					result = polygon;
+				}
+			}
+			return result;
 		}
 		return null;
 	}

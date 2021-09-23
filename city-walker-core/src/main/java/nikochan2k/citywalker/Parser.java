@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
-import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.building.Building;
@@ -44,7 +43,6 @@ import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 import org.citygml4j.model.gml.geometry.primitives.SurfaceProperty;
 import org.citygml4j.model.gml.measures.Length;
 import org.citygml4j.xml.io.CityGMLInputFactory;
-import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
 import org.locationtech.proj4j.CRSFactory;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
@@ -259,20 +257,24 @@ public class Parser {
 		return flipXY;
 	}
 
-	public void parse(File input) throws CityGMLBuilderException, CityGMLReadException {
-		CityGMLContext ctx = CityGMLContext.getInstance();
-		CityGMLBuilder builder = ctx.createCityGMLBuilder();
-		CityGMLInputFactory in = builder.createCityGMLInputFactory();
-		try (CityGMLReader reader = in.createCityGMLReader(input)) {
-			Processor processor = factory.createProcessor(input, outputCRS.getName());
-			LOGGER.info(String.format("Parsing \"%s\"", input.getAbsolutePath()));
-			while (reader.hasNext()) {
-				CityGML citygml = reader.nextFeature();
-				if (citygml.getCityGMLClass() == CityGMLClass.CITY_MODEL) {
-					parseCity(processor, citygml);
+	public void parse(File input) throws CityWalkerException {
+		try {
+			CityGMLContext ctx = CityGMLContext.getInstance();
+			CityGMLBuilder builder = ctx.createCityGMLBuilder();
+			CityGMLInputFactory in = builder.createCityGMLInputFactory();
+			try (CityGMLReader reader = in.createCityGMLReader(input)) {
+				Processor processor = factory.createProcessor(input, outputCRS.getName());
+				LOGGER.info(String.format("Parsing \"%s\"", input.getAbsolutePath()));
+				while (reader.hasNext()) {
+					CityGML citygml = reader.nextFeature();
+					if (citygml.getCityGMLClass() == CityGMLClass.CITY_MODEL) {
+						parseCity(processor, citygml);
+					}
 				}
+				processor.finish();
 			}
-			processor.finish();
+		} catch (Exception e) {
+			throw new CityWalkerException(e.getMessage(), e);
 		}
 	}
 

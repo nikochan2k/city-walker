@@ -18,8 +18,8 @@ public class GeoJSONFactory implements Factory {
 	}
 	
 	@Override
-	public Processor createProcessor(File input) {
-		return new GeoJSONConverter(input, outDir);
+	public Processor createProcessor(File input, String srs) {
+		return new GeoJSONConverter(input, outDir, srs);
 	}
 
 }

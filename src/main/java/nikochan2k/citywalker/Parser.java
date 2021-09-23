@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
@@ -26,11 +28,13 @@ import org.citygml4j.model.citygml.generics.IntAttribute;
 import org.citygml4j.model.citygml.generics.MeasureAttribute;
 import org.citygml4j.model.citygml.generics.StringAttribute;
 import org.citygml4j.model.citygml.generics.UriAttribute;
+import org.citygml4j.model.gml.feature.BoundingShape;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 import org.citygml4j.model.gml.geometry.complexes.CompositeSurface;
 import org.citygml4j.model.gml.geometry.primitives.AbstractSurface;
 import org.citygml4j.model.gml.geometry.primitives.DirectPosition;
 import org.citygml4j.model.gml.geometry.primitives.DirectPositionList;
+import org.citygml4j.model.gml.geometry.primitives.Envelope;
 import org.citygml4j.model.gml.geometry.primitives.Exterior;
 import org.citygml4j.model.gml.geometry.primitives.LinearRing;
 import org.citygml4j.model.gml.geometry.primitives.Polygon;
@@ -42,22 +46,44 @@ import org.citygml4j.model.gml.measures.Length;
 import org.citygml4j.xml.io.CityGMLInputFactory;
 import org.citygml4j.xml.io.reader.CityGMLReadException;
 import org.citygml4j.xml.io.reader.CityGMLReader;
+import org.locationtech.proj4j.CRSFactory;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.locationtech.proj4j.CoordinateTransform;
+import org.locationtech.proj4j.CoordinateTransformFactory;
+import org.locationtech.proj4j.ProjCoordinate;
 
 import nikochan2k.citywalker.Item.Coordinates;
 
 public class Parser {
 
 	private static final Logger LOGGER = Logger.getLogger(Parser.class.getName());
+	private static final Pattern SRS_LIKE = Pattern.compile("\\d{4,}");
 
 	private boolean flipXY;
 
-	private Factory factory;
+	private final CRSFactory crsFactory = new CRSFactory();
+	private final Factory factory;
+	private CoordinateReferenceSystem inputCRS;
+	private CoordinateReferenceSystem outputCRS;
+	private final CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
 
 	public Parser(Factory factory) {
-		this.factory = factory;
+		this(factory, null, null);
 	}
 
-	private Item createItem(Building b) {
+	public Parser(Factory factory, String inputSRS, String outputSRS) {
+		this.factory = factory;
+		if (inputSRS != null) {
+			inputCRS = crsFactory.createFromName(inputSRS);
+		}
+		if (outputSRS != null) {
+			outputCRS = crsFactory.createFromName(outputSRS);
+		} else {
+			outputCRS = crsFactory.createFromName("EPSG:4326");
+		}
+	}
+
+	private Item createItem(Building b, CoordinateTransform ct) {
 		Polygon polygon = getPolygon(b.getLod0FootPrint());
 		if (polygon == null)
 			polygon = getPolygon(b.getLod0RoofEdge());
@@ -86,24 +112,32 @@ public class Parser {
 				dl.addAll(dp.getValue());
 			}
 		}
-		if(dl.size() == 0) {
+		if (dl.size() == 0) {
 			return null;
 		}
 		Item item = new Item(b.getId());
 		double roof = 0.0;
 		for (int i = 0, end = dl.size(); i < end; i += 3) {
-			Double x = dl.get(i);
-			Double y = dl.get(i + 1);
-			Double z = dl.get(i + 2);
-			Coordinates coords;
-			if (this.flipXY) {
-				coords = new Coordinates(y, x, 0.0);
-			} else {
-				coords = new Coordinates(x, y, 0.0);
-			}
-			item.vertexes.add(coords);
-			if (z != null) {
+			try {
+				double x = dl.get(i);
+				double y = dl.get(i + 1);
+				if (flipXY) {
+					double tmp = x;
+					x = y;
+					y = tmp;
+				}
+				if (ct != null) {
+					ProjCoordinate result = new ProjCoordinate();
+					ct.transform(new ProjCoordinate(x, y), result);
+					x = result.x;
+					y = result.y;
+				}
+				double z = dl.get(i + 2);
+				Coordinates coords = new Coordinates(x, y, 0.0);
+				item.vertexes.add(coords);
 				roof = Math.max(roof, z);
+			} catch (RuntimeException e) {
+				LOGGER.warning(e.toString());
 			}
 		}
 		Map<String, Serializable> props = item.props;
@@ -184,7 +218,7 @@ public class Parser {
 		CityGMLBuilder builder = ctx.createCityGMLBuilder();
 		CityGMLInputFactory in = builder.createCityGMLInputFactory();
 		try (CityGMLReader reader = in.createCityGMLReader(input)) {
-			Processor processor = factory.createProcessor(input);
+			Processor processor = factory.createProcessor(input, outputCRS.getName());
 			LOGGER.info(String.format("Parsing \"%s\"", input.getAbsolutePath()));
 			while (reader.hasNext()) {
 				CityGML citygml = reader.nextFeature();
@@ -199,16 +233,56 @@ public class Parser {
 	private void parseCity(Processor processor, CityGML citygml) {
 		CityModel cityModel = (CityModel) citygml;
 		for (CityObjectMember cityObjectMember : cityModel.getCityObjectMember()) {
-			AbstractCityObject cityObject = cityObjectMember.getCityObject();
-			if (cityObject.getCityGMLClass() != CityGMLClass.BUILDING) {
-				continue;
+			try {
+				AbstractCityObject cityObject = cityObjectMember.getCityObject();
+				if (cityObject.getCityGMLClass() != CityGMLClass.BUILDING) {
+					continue;
+				}
+
+				CoordinateReferenceSystem inputCRS = this.inputCRS;
+				if (inputCRS == null) {
+					String inputSRS = "EPSG:4326";
+					BoundingShape bs = cityObject.getBoundedBy();
+					if (bs != null) {
+						Envelope envelope = bs.getEnvelope();
+						if (envelope != null) {
+							inputSRS = envelope.getSrsName();
+						}
+					}
+
+					try {
+						inputCRS = crsFactory.createFromName(inputSRS);
+					} catch (RuntimeException e) {
+					}
+					if (inputCRS == null) {
+						Matcher m = SRS_LIKE.matcher(inputSRS);
+						if (m.find()) {
+							inputSRS = "EPSG:" + m.group();
+						}
+						try {
+							inputCRS = crsFactory.createFromName(inputSRS);
+						} catch (RuntimeException e) {
+							LOGGER.warning(e.toString());
+						}
+					}
+					if (inputCRS == null) {
+						inputCRS = crsFactory.createFromName("EPSG:4326");
+					}
+				}
+				CoordinateTransform ct = null;
+				if (!inputCRS.equals(outputCRS)) {
+					ct = ctFactory.createTransform(inputCRS, outputCRS);
+				}
+
+				Building b = (Building) cityObject;
+				Item item = createItem(b, ct);
+				if (item == null) {
+					continue;
+				}
+				processor.process(item);
+			} catch (RuntimeException e) {
+				LOGGER.warning(e.toString());
 			}
-			Building b = (Building) cityObject;
-			Item item = createItem(b);
-			if (item == null) {
-				continue;
-			}
-			processor.process(item);
 		}
 	}
 

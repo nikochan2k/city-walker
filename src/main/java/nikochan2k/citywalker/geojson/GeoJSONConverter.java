@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import com.github.filosganga.geogson.gson.GeometryAdapterFactory;
 import com.github.filosganga.geogson.model.Feature;
+import com.github.filosganga.geogson.model.Feature.Builder;
 import com.github.filosganga.geogson.model.FeatureCollection;
 import com.github.filosganga.geogson.model.LinearRing;
 import com.github.filosganga.geogson.model.Point;
@@ -38,7 +39,7 @@ public class GeoJSONConverter extends Converter {
 	private final List<Feature> features = new ArrayList<Feature>();
 	private final Gson gson;
 
-	protected GeoJSONConverter(File input, File outDir) {
+	protected GeoJSONConverter(File input, File outDir, String srs) {
 		super(input, outDir);
 		gson = new GsonBuilder().registerTypeAdapterFactory(new GeometryAdapterFactory()).create();
 	}
@@ -79,7 +80,11 @@ public class GeoJSONConverter extends Converter {
 				map.put(entry.getKey(), new JsonPrimitive((Number) value));
 			}
 		}
-		Feature feature = Feature.builder().withId(item.id).withGeometry(polygon).withProperties(map).build();
+		Builder builder = Feature.builder();
+		if(item.id != null) {
+			builder.withId(item.id);
+		}
+		Feature feature = builder.withGeometry(polygon).withProperties(map).build();
 		features.add(feature);
 	}
 

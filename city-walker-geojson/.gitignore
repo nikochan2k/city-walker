@@ -1,0 +1,5 @@
+/target
+/.gradle
+/src/test/java/nikochan2k/citywalker/geojson/*.gml
+/src/test/java/nikochan2k/citywalker/geojson/*.xml
+/.settings

@@ -33,13 +33,13 @@ public class Cli implements Callable<Integer> {
 	@Parameters(paramLabel = "FILE", description = "Glob pattern of file path.")
 	private String[] globs;
 
-	@Option(names = { "-s", "--src" }, description = "Source SRS (Default: Try to detect, or EPSG:4326")
+	@Option(names = { "-s", "--src" }, description = "Source SRS (Default: Try to detect, or EPSG:4326)")
 	String inputSRS;
 
 	@Option(names = { "-n", "--no-attr" }, description = "No attribute except for measuredHeight")
 	boolean noAttributes;
 
-	@Option(names = { "-o", "--output" }, description = "Output directory (Default: the same directory with input file")
+	@Option(names = { "-o", "--output" }, description = "Output directory (Default: the same directory with input file)")
 	File outputDir;
 
 	@Option(names = { "-d", "--dst" }, description = "Destination SRS (Default: EPSG:4326)")

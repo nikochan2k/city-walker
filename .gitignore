@@ -27,3 +27,4 @@ hs_err_pid*
 /Servers
 .settings
 .gradle
+dependency-reduced-pom.xml

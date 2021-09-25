@@ -2,9 +2,37 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>io.github.nikochan2k</groupId>
 	<artifactId>city-walker-geojson</artifactId>
-	<version>0.1.0</version>
+	<version>0.1.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>city-walker-core</name>
+	<description>CityGML Converter</description>
+	<url>https://github.com/nikochan2k/city-walker</url>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Yoshihiro Seki</name>
+			<email>nikochan2k@gmail.com</email>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:https://github.com/nikochan2k/city-walker.git</connection>
+		<developerConnection>scm:git:https://github.com/nikochan2k/city-walker.git</developerConnection>
+		<url>https://github.com/nikochan2k/city-walker</url>
+		<tag>HEAD</tag>
+	</scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.8</jdk.version>
@@ -20,11 +48,11 @@
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
 	<build>
@@ -40,7 +68,6 @@
 						<target>${jdk.version}</target>
 					</configuration>
 				</plugin>
-				<!-- source:jar -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-source-plugin</artifactId>
@@ -54,7 +81,19 @@
 						</execution>
 					</executions>
 				</plugin>
-				<!-- sonatype release -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.9.1</version>
+					<executions>
+						<execution>
+							<id>attach-javadocs</id>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 				<plugin>
 					<groupId>org.sonatype.plugins</groupId>
 					<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -62,11 +101,10 @@
 					<extensions>true</extensions>
 					<configuration>
 						<serverId>ossrh</serverId>
-						<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+						<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
 						<autoReleaseAfterClose>true</autoReleaseAfterClose>
 					</configuration>
 				</plugin>
-
 				<!-- gpg sign -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -85,9 +123,4 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	<scm>
-		<connection>scm:git:https://github.com/nikochan2k/city-walker.git</connection>
-		<developerConnection>scm:git:https://github.com/nikochan2k/city-walker.git</developerConnection>
-		<url>https://github.com/nikochan2k/city-walker</url>
-	</scm>
 </project>

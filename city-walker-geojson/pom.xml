@@ -80,8 +80,13 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.2.4</version>
 				<configuration>
-					<shadedArtifactAttached>true</shadedArtifactAttached>
 					<minimizeJar>true</minimizeJar>
+					<artifactSet>
+						<includes>
+							<include>io.github.nikochan2k:city-walker-geojson</include>
+							<include>com.github.filosganga:geogson-core</include>
+						</includes>
+					</artifactSet>
 				</configuration>
 				<executions>
 					<execution>

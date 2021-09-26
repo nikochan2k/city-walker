@@ -2,9 +2,9 @@ package nikochan2k.citywalker;
 
 import java.io.File;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -158,7 +158,12 @@ public class Parser {
 					props.put(sa.getName(), sa.getValue());
 				} else if (attr instanceof UriAttribute) {
 					UriAttribute ua = (UriAttribute) attr;
-					props.put(ua.getName(), ua.getValue());
+					try {
+						URI uri = new URI(ua.getValue());
+						props.put(ua.getName(), uri);
+					} catch (URISyntaxException e) {
+						LOGGER.fine(e.toString());
+					}
 				} else if (attr instanceof MeasureAttribute) {
 					MeasureAttribute ma = (MeasureAttribute) attr;
 					props.put(ma.getName(), ma.getValue().getValue());
@@ -169,10 +174,9 @@ public class Parser {
 					DoubleAttribute da = (DoubleAttribute) attr;
 					props.put(da.getName(), da.getValue());
 				} else if (attr instanceof DateAttribute) {
-					DateAttribute st = (DateAttribute) attr;
-					LocalDate date = st.getValue();
-					DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
-					props.put(st.getName(), date.atStartOfDay().atOffset(ZoneOffset.UTC).format(dtf));
+					DateAttribute da = (DateAttribute) attr;
+					LocalDate date = da.getValue();
+					props.put(da.getName(), date);
 				}
 			}
 		}

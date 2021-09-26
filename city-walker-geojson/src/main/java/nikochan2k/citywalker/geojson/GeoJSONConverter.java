@@ -8,7 +8,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,15 +77,23 @@ public class GeoJSONConverter extends Converter {
 		Polygon polygon = Polygon.of(lr);
 		Map<String, JsonElement> map = new HashMap<>();
 		for (Entry<String, Serializable> entry : item.props.entrySet()) {
+			String key = entry.getKey();
 			Serializable value = entry.getValue();
 			if (value instanceof String) {
-				map.put(entry.getKey(), new JsonPrimitive((String) value));
+				map.put(key, new JsonPrimitive((String) value));
 			} else if (value instanceof Number) {
-				map.put(entry.getKey(), new JsonPrimitive((Number) value));
+				map.put(key, new JsonPrimitive((Number) value));
+			} else if (value instanceof LocalDate) {
+				LocalDate date = (LocalDate) value;
+				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+				map.put(key, new JsonPrimitive(date.atStartOfDay().atOffset(ZoneOffset.UTC).format(dtf)));
+			} else if (value instanceof URI) {
+				URI uri = (URI) value;
+				map.put(key, new JsonPrimitive(uri.toASCIIString()));
 			}
 		}
 		Builder builder = Feature.builder();
-		if(item.id != null) {
+		if (item.id != null) {
 			builder.withId(item.id);
 		}
 		Feature feature = builder.withGeometry(polygon).withProperties(map).build();

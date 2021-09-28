@@ -27,6 +27,7 @@ import org.citygml4j.model.citygml.generics.IntAttribute;
 import org.citygml4j.model.citygml.generics.MeasureAttribute;
 import org.citygml4j.model.citygml.generics.StringAttribute;
 import org.citygml4j.model.citygml.generics.UriAttribute;
+import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.feature.BoundingShape;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 import org.citygml4j.model.gml.geometry.complexes.CompositeSurface;
@@ -62,6 +63,17 @@ public class Parser {
 	private final Factory factory;
 	private CoordinateReferenceSystem inputCRS;
 	private CoordinateReferenceSystem outputCRS;
+
+	private String joinCodes(List<Code> codes) {
+		StringBuilder builder = new StringBuilder();
+		for (Code code : codes) {
+			if (builder.length() != 0) {
+				builder.append(',');
+			}
+			builder.append(code.getValue());
+		}
+		return builder.toString();
+	}
 
 	public Parser(Factory factory) {
 		this.factory = factory;
@@ -118,7 +130,6 @@ public class Parser {
 			return null;
 		}
 		Item item = new Item(b.getId());
-		double roof = 0.0;
 		for (int i = 0, end = dl.size(); i < end; i += 3) {
 			try {
 				double x = dl.get(i);
@@ -134,10 +145,8 @@ public class Parser {
 					x = result.x;
 					y = result.y;
 				}
-				double z = dl.get(i + 2);
 				Coordinates coords = new Coordinates(x, y, 0.0);
 				item.vertexes.add(coords);
-				roof = Math.max(roof, z);
 			} catch (RuntimeException e) {
 				LOGGER.warning(e.toString());
 			}
@@ -146,11 +155,45 @@ public class Parser {
 		Length length = b.getMeasuredHeight();
 		if (length != null) {
 			props.put("measuredHeight", length.getValue());
-		} else {
-			props.put("measuredHeight", roof);
 		}
 
 		if (!factory.isNoAttributes()) {
+			String id = b.getId();
+			if (id != null) {
+				props.put("id", id);
+			}
+			Code clazz = b.getClazz();
+			if (clazz != null) {
+				props.put("class", b.getClazz().getValue());
+			}
+			List<Code> function = b.getFunction();
+			if (function != null && 0 < function.size()) {
+				props.put("function", joinCodes(function));
+			}
+			List<Code> usage = b.getUsage();
+			if (usage != null && 0 < usage.size()) {
+				props.put("usage", joinCodes(usage));
+			}
+			LocalDate yearOfConstruction = b.getYearOfConstruction();
+			if (yearOfConstruction != null) {
+				props.put("yearOfConstruction", yearOfConstruction);
+			}
+			LocalDate yearOfDemolition = b.getYearOfDemolition();
+			if (yearOfDemolition != null) {
+				props.put("yearOfDemolition", yearOfDemolition);
+			}
+			Code roofType = b.getRoofType();
+			if (roofType != null) {
+				props.put("roofType", roofType.getValue());
+			}
+			Integer storeysAboveGround = b.getStoreysAboveGround();
+			if (storeysAboveGround != null) {
+				props.put("storeysAboveGround", storeysAboveGround);
+			}
+			Integer storeysBelowGround = b.getStoreysBelowGround();
+			if (storeysBelowGround != null) {
+				props.put("storeysBelowGround", storeysBelowGround);
+			}
 			List<AbstractGenericAttribute> attributes = b.getGenericAttribute();
 			for (AbstractGenericAttribute attr : attributes) {
 				if (attr instanceof StringAttribute) {

@@ -6,8 +6,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -310,10 +312,17 @@ public class Parser {
 	}
 
 	public void parse(File input) throws CityWalkerException {
+		parse(input, new HashMap<String, Object>(0));
+	}
+
+	public void parse(File input, Map<String, Object> props) throws CityWalkerException {
 		try {
 			CityGMLContext ctx = CityGMLContext.getInstance();
 			CityGMLBuilder builder = ctx.createCityGMLBuilder();
 			CityGMLInputFactory in = builder.createCityGMLInputFactory();
+			for(Entry<String, Object> entry : props.entrySet()) {
+				in.setProperty(entry.getKey(), entry.getValue());
+			}
 			try (CityGMLReader reader = in.createCityGMLReader(input)) {
 				Processor processor = factory.createProcessor(input, outputCRS.getName());
 				LOGGER.info(String.format("Parsing \"%s\"", input.getAbsolutePath()));

@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.citygml4j.CityGMLContext;
+import org.citygml4j.ade.iur.UrbanRevitalizationADEContext;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
@@ -312,12 +313,16 @@ public class Parser {
 	}
 
 	public void parse(File input) throws CityWalkerException {
+		HashMap<String, Object> defaultProps = new HashMap<>();
+		defaultProps.put(CityGMLInputFactory.FAIL_ON_MISSING_ADE_SCHEMA, false);
+		defaultProps.put(CityGMLInputFactory.USE_VALIDATION, false);
 		parse(input, new HashMap<String, Object>(0));
 	}
 
 	public void parse(File input, Map<String, Object> props) throws CityWalkerException {
 		try {
 			CityGMLContext ctx = CityGMLContext.getInstance();
+			ctx.registerADEContext(new UrbanRevitalizationADEContext());
 			CityGMLBuilder builder = ctx.createCityGMLBuilder();
 			CityGMLInputFactory in = builder.createCityGMLInputFactory();
 			for(Entry<String, Object> entry : props.entrySet()) {

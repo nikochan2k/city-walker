@@ -39,11 +39,6 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>io.github.nikochan2k</groupId>
-			<artifactId>city-walker-core</artifactId>
-			<version>0.1.3-SNAPSHOT</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.filosganga/geogson-core -->
 		<dependency>
 			<groupId>com.github.filosganga</groupId>

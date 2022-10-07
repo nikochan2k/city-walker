@@ -19,6 +19,8 @@ import org.citygml4j.ade.iur.UrbanRevitalizationADEContext;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
+import org.citygml4j.model.citygml.ade.ADEComponent;
+import org.citygml4j.model.citygml.ade.ADEException;
 import org.citygml4j.model.citygml.building.Building;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
@@ -60,6 +62,15 @@ public class Parser {
 
 	private static final Logger LOGGER = Logger.getLogger(Parser.class.getName());
 	private static final Pattern SRS_LIKE = Pattern.compile("\\d{4,}");
+	
+	static {
+		CityGMLContext ctx = CityGMLContext.getInstance();
+		try {
+			ctx.registerADEContext(new UrbanRevitalizationADEContext());
+		} catch (ADEException e) {
+			LOGGER.warning(e.toString());
+		}
+	}
 
 	private final CRSFactory crsFactory = new CRSFactory();
 	private final CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
@@ -225,6 +236,11 @@ public class Parser {
 					props.put(da.getName(), date);
 				}
 			}
+			
+			List<ADEComponent> components =  b.getGenericApplicationPropertyOfAbstractBuilding();
+			for(ADEComponent c : components) {
+				// TODO
+			}
 		}
 
 		return item;
@@ -322,7 +338,6 @@ public class Parser {
 	public void parse(File input, Map<String, Object> props) throws CityWalkerException {
 		try {
 			CityGMLContext ctx = CityGMLContext.getInstance();
-			ctx.registerADEContext(new UrbanRevitalizationADEContext());
 			CityGMLBuilder builder = ctx.createCityGMLBuilder();
 			CityGMLInputFactory in = builder.createCityGMLInputFactory();
 			for(Entry<String, Object> entry : props.entrySet()) {
@@ -346,6 +361,7 @@ public class Parser {
 
 	private void parseCity(Processor processor, CityGML citygml) {
 		CityModel cityModel = (CityModel) citygml;
+		
 		for (CityObjectMember cityObjectMember : cityModel.getCityObjectMember()) {
 			try {
 				AbstractCityObject cityObject = cityObjectMember.getCityObject();

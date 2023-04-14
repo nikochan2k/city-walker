@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>org.citygml4j</groupId>
 			<artifactId>citygml4j</artifactId>
-			<version>2.12.1</version>
+			<version>2.12.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.locationtech.proj4j/proj4j -->
 		<dependency>
@@ -53,6 +53,11 @@
 			<groupId>org.citygml4j.ade</groupId>
 			<artifactId>iur-ade-citygml4j</artifactId>
 			<version>1.4.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.13.1</version>
 		</dependency>
 	</dependencies>
 

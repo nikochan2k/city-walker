@@ -10,7 +10,7 @@ public abstract class Converter extends Processor {
 		String fileName = input.getName();
 		int lastIndex = fileName.lastIndexOf('.');
 		String baseName;
-		if(0 < lastIndex) {
+		if (0 < lastIndex) {
 			baseName = fileName.substring(0, lastIndex);
 		} else {
 			baseName = fileName;
@@ -22,7 +22,7 @@ public abstract class Converter extends Processor {
 			this.output = new File(input.getParent(), outName);
 		}
 	}
-	
+
 	protected abstract String getExtension();
 
 }

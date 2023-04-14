@@ -9,9 +9,9 @@ public abstract class Factory {
 	private boolean noAttributes;
 	private File outputDir;
 	private String outputSRS;
-	
+
 	public abstract Processor createProcessor(File input, String srs);
-	
+
 	public String getInputSRS() {
 		return inputSRS;
 	}
@@ -53,6 +53,5 @@ public abstract class Factory {
 	public void setOutputSRS(String outputSRS) {
 		this.outputSRS = outputSRS;
 	}
-	
-	
+
 }

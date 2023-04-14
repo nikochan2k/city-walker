@@ -16,6 +16,12 @@ import java.util.regex.Pattern;
 
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.ade.iur.UrbanRevitalizationADEContext;
+import org.citygml4j.ade.iur.model.uro.BuildingDetails;
+import org.citygml4j.ade.iur.model.uro.BuildingDetailsProperty;
+import org.citygml4j.ade.iur.model.uro.BuildingDetailsPropertyElement;
+import org.citygml4j.ade.iur.model.uro.ExtendedAttributeProperty;
+import org.citygml4j.ade.iur.model.uro.KeyValuePair;
+import org.citygml4j.ade.iur.model.uro.KeyValuePairProperty;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
@@ -62,7 +68,7 @@ public class Parser {
 
 	private static final Logger LOGGER = Logger.getLogger(Parser.class.getName());
 	private static final Pattern SRS_LIKE = Pattern.compile("\\d{4,}");
-	
+
 	static {
 		CityGMLContext ctx = CityGMLContext.getInstance();
 		try {
@@ -148,6 +154,7 @@ public class Parser {
 			try {
 				double x = dl.get(i);
 				double y = dl.get(i + 1);
+				double z = dl.get(i + 2);
 				if (factory.isFlipXY()) {
 					double tmp = x;
 					x = y;
@@ -159,7 +166,7 @@ public class Parser {
 					x = result.x;
 					y = result.y;
 				}
-				Coordinates coords = new Coordinates(x, y, 0.0);
+				Coordinates coords = new Coordinates(x, y, z);
 				item.vertexes.add(coords);
 			} catch (RuntimeException e) {
 				LOGGER.warning(e.toString());
@@ -236,10 +243,24 @@ public class Parser {
 					props.put(da.getName(), date);
 				}
 			}
-			
-			List<ADEComponent> components =  b.getGenericApplicationPropertyOfAbstractBuilding();
-			for(ADEComponent c : components) {
-				// TODO
+
+			List<ADEComponent> components = b.getGenericApplicationPropertyOfAbstractBuilding();
+			for (ADEComponent c : components) {
+				if(c instanceof BuildingDetailsPropertyElement) {
+					BuildingDetailsPropertyElement bdpe = (BuildingDetailsPropertyElement)c;
+					BuildingDetailsProperty bdp = bdpe.getValue();
+					if(bdp != null) {
+						BuildingDetails bd = bdp.getObject();
+						System.out.println(bd);
+					}
+				} else if(c instanceof ExtendedAttributeProperty) {
+					ExtendedAttributeProperty eap = new ExtendedAttributeProperty();
+					KeyValuePairProperty kvpp =  eap.getValue();
+					if(kvpp != null) {
+						KeyValuePair kvp = kvpp.getObject();
+						System.out.println(kvp);
+					}
+				}
 			}
 		}
 
@@ -340,7 +361,7 @@ public class Parser {
 			CityGMLContext ctx = CityGMLContext.getInstance();
 			CityGMLBuilder builder = ctx.createCityGMLBuilder();
 			CityGMLInputFactory in = builder.createCityGMLInputFactory();
-			for(Entry<String, Object> entry : props.entrySet()) {
+			for (Entry<String, Object> entry : props.entrySet()) {
 				in.setProperty(entry.getKey(), entry.getValue());
 			}
 			try (CityGMLReader reader = in.createCityGMLReader(input)) {
@@ -361,7 +382,7 @@ public class Parser {
 
 	private void parseCity(Processor processor, CityGML citygml) {
 		CityModel cityModel = (CityModel) citygml;
-		
+
 		for (CityObjectMember cityObjectMember : cityModel.getCityObjectMember()) {
 			try {
 				AbstractCityObject cityObject = cityObjectMember.getCityObject();

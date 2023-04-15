@@ -2,6 +2,9 @@ package nikochan2k.citywalker;
 
 import java.io.File;
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
@@ -16,17 +19,12 @@ import java.util.regex.Pattern;
 
 import org.citygml4j.CityGMLContext;
 import org.citygml4j.ade.iur.UrbanRevitalizationADEContext;
-import org.citygml4j.ade.iur.model.uro.BuildingDetails;
-import org.citygml4j.ade.iur.model.uro.BuildingDetailsProperty;
-import org.citygml4j.ade.iur.model.uro.BuildingDetailsPropertyElement;
-import org.citygml4j.ade.iur.model.uro.ExtendedAttributeProperty;
-import org.citygml4j.ade.iur.model.uro.KeyValuePair;
-import org.citygml4j.ade.iur.model.uro.KeyValuePairProperty;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.ade.ADEComponent;
 import org.citygml4j.model.citygml.ade.ADEException;
+import org.citygml4j.model.citygml.ade.binding.ADEGenericApplicationProperty;
 import org.citygml4j.model.citygml.building.Building;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.CityModel;
@@ -38,6 +36,7 @@ import org.citygml4j.model.citygml.generics.IntAttribute;
 import org.citygml4j.model.citygml.generics.MeasureAttribute;
 import org.citygml4j.model.citygml.generics.StringAttribute;
 import org.citygml4j.model.citygml.generics.UriAttribute;
+import org.citygml4j.model.gml.base.AssociationByRep;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.feature.BoundingShape;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
@@ -83,17 +82,6 @@ public class Parser {
 	private final Factory factory;
 	private CoordinateReferenceSystem inputCRS;
 	private CoordinateReferenceSystem outputCRS;
-
-	private String joinCodes(List<Code> codes) {
-		StringBuilder builder = new StringBuilder();
-		for (Code code : codes) {
-			if (builder.length() != 0) {
-				builder.append(',');
-			}
-			builder.append(code.getValue());
-		}
-		return builder.toString();
-	}
 
 	public Parser(Factory factory) {
 		this.factory = factory;
@@ -246,19 +234,45 @@ public class Parser {
 
 			List<ADEComponent> components = b.getGenericApplicationPropertyOfAbstractBuilding();
 			for (ADEComponent c : components) {
-				if(c instanceof BuildingDetailsPropertyElement) {
-					BuildingDetailsPropertyElement bdpe = (BuildingDetailsPropertyElement)c;
-					BuildingDetailsProperty bdp = bdpe.getValue();
-					if(bdp != null) {
-						BuildingDetails bd = bdp.getObject();
-						System.out.println(bd);
-					}
-				} else if(c instanceof ExtendedAttributeProperty) {
-					ExtendedAttributeProperty eap = new ExtendedAttributeProperty();
-					KeyValuePairProperty kvpp =  eap.getValue();
-					if(kvpp != null) {
-						KeyValuePair kvp = kvpp.getObject();
-						System.out.println(kvp);
+				if (c instanceof ADEGenericApplicationProperty<?>) {
+					ADEGenericApplicationProperty<?> prop = (ADEGenericApplicationProperty<?>) c;
+					AssociationByRep<?> value = (AssociationByRep<?>) prop.getValue();
+					Object obj = value.getObject();
+					if (obj != null) {
+						Field[] fields = obj.getClass().getDeclaredFields();
+						outer: for (Field field : fields) {
+							try {
+								field.setAccessible(true);
+								Object unknown = field.get(obj);
+								if (unknown == null) {
+									continue;
+								}
+								Serializable s = null;
+								Method[] methods = unknown.getClass().getMethods();
+								boolean found = false;
+								for (Method method : methods) {
+									if ("getValue".equals(method.getName())) {
+										Object o = method.invoke(unknown);
+										if (o instanceof Serializable) {
+											continue outer;
+										}
+										s = (Serializable) o;
+										found = true;
+										break;
+									}
+								}
+								if (!found) {
+									if (obj instanceof Serializable) {
+										s = (Serializable) obj;
+									} else {
+										continue;
+									}
+								}
+								props.put(field.getName(), s);
+							} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+								// Do nothing
+							}
+						}
 					}
 				}
 			}
@@ -347,6 +361,17 @@ public class Parser {
 		}
 		Solid solid = (Solid) sp.getObject();
 		return getPolygon(solid.getExterior().getGeometry());
+	}
+
+	private String joinCodes(List<Code> codes) {
+		StringBuilder builder = new StringBuilder();
+		for (Code code : codes) {
+			if (builder.length() != 0) {
+				builder.append(',');
+			}
+			builder.append(code.getValue());
+		}
+		return builder.toString();
 	}
 
 	public void parse(File input) throws CityWalkerException {
